@@ -3,10 +3,10 @@
 Our main goal is to share tips from some well-known bughunters. Using recon methodology, we are able to find subdomains, apis, and tokens that are already exploitable, so we can report them. We wish to influence Onelinetips and explain the commands, for the better understanding of new hunters..
 
 ## Join Us
-[![Telegram](https://patrolavia.github.io/telegram-badge/chat.png)](https://t.me/KingOfTipsBugBounty)
 
-[![GitHub followers](https://img.shields.io/github/followers/bminossi.svg?style=social&label=Follow&maxAge=2592000)](https://github.com/bminossi?tab=followers) 
-[![GitHub followers](https://img.shields.io/github/followers/OfJAAH.svg?style=social&label=Follow&maxAge=2592000)](https://github.com/OfJAAH?tab=followers)
+[![Telegram](https://patrolavia.github.io/telegram-badge/chat.png)](https://t.me/joinchat/DN_iQksIuhyPKJL1gw0ttA)
+[![The King](https://aleen42.github.io/badges/src/twitter.svg)](https://twitter.com/ofjaaah)
+
 
 ## Special thanks
 
@@ -17,7 +17,7 @@ Our main goal is to share tips from some well-known bughunters. Using recon meth
 - [@jeff_foley](https://twitter.com/@jeff_foley)
 - [@NahamSec](https://twitter.com/NahamSec)
 - [@j3ssiejjj](https://twitter.com/j3ssiejjj)
-
+- [@zseano](https://twitter.com/zseano)
 
 ## Scripts that need to be installed
 
@@ -33,21 +33,54 @@ To run the project, you will need to install the following programs:
 - [Gargs](https://github.com/brentp/gargs)
 - [Chaos](https://github.com/projectdiscovery/chaos-client)
 - [Httpx](https://github.com/projectdiscovery/httpx)
+- [Jaeles](https://github.com/jaeles-project/jaeles)
 - [Findomain](https://github.com/Edu4rdSHL/findomain)
 - [Gf](https://github.com/tomnomnom/gf)
 - [Unew](https://github.com/dwisiswant0/unew)
 - [Rush](https://github.com/shenwei356/rush)
+- [Jsubfinder](https://github.com/hiddengearz/jsubfinder)
+- [Shuffledns](https://github.com/projectdiscovery/shuffledns)
+
+### OneLiners
+
+
+###  My recon automation simple. OFJAAAH.sh
+
+- [Explaining command](https://bit.ly/3nWHM22)
+
+
+```bash
+amass enum -d $1 -o amass1 ; chaos -d $1 -o chaos1 -silent ; assetfinder $1 >> assetfinder1 ; subfinder -d $1 -o subfinder1 ; findomain -t $1 -q -u findomain1 ;python3 /root/PENTESTER/github-search/github-subdomains.py -t YOURTOKEN -d $1 >> github ; cat assetfinder1 subfinder1 chaos1 amass1 findomain1 subfinder1 github >> hosts ; subfinder -dL hosts -o full -timeout 10 -silent ; httpx -l hosts -silent -threads 9000 -timeout 30 | anew domains ; rm -rf amass1 chaos1 assetfinder1 subfinder1 findomain1  github
+```
+
+###  ShuffleDNS to domains in file scan nuclei.
+
+- [Explaining command](https://bit.ly/2L3YVsc)
+
+```bash
+xargs -a domain -I@ -P500 sh -c 'shuffledns -d "@" -silent -w words.txt -r resolvers.txt' | httpx -silent -threads 1000 | nuclei -t /root/nuclei-templates/ -o re1
+```
 
 
 ###  Search Asn Amass
 
 - [Explaining command](https://bit.ly/2EMooDB)
 
-Amass intel will search the organization "paypal" from a database of ASNs at a faster-than-default rate. It will then take these ASN numbers and scan the complete ASN/IP space for all tld's in that IP space (paypal.com, paypal.co.id, paypal.me).
+Amass intel will search the organization "paypal" from a database of ASNs at a faster-than-default rate. It will then take these ASN numbers and scan the complete ASN/IP space for all tld's in that IP space (paypal.com, paypal.co.id, paypal.me)
 
 ```bash
 amass intel -org paypal -max-dns-queries 2500 | awk -F, '{print $1}' ORS=',' | sed 's/,$//' | xargs -P3 -I@ -d ',' amass intel -asn @ -max-dns-queries 2500''
 ```
+
+###  SQLINJECTION Mass domain file
+
+- [Explaining command](https://bit.ly/354lYuf)
+
+```bash
+
+httpx -l domains -silent -threads 1000 | xargs -I@ sh -c 'findomain -t @ -q | httpx -silent | anew | waybackurls | gf sqli >> sqli ; sqlmap -m sqli --batch --random-agent --level 1'
+```
+
 
 ###  Using chaos search js
 
@@ -298,7 +331,7 @@ wget https://raw.githubusercontent.com/arkadiyt/bounty-targets-data/master/data/
 - [Explained command](https://bit.ly/2ZeAhcF)
 
 ```bash
-findomain -t testphp.vulnweb.com -q | httpx -silent | anew | waybackurls | gf sqli >> sqli ; sqlmap -m sqli -batch --random-agent --level 1
+findomain -t testphp.vulnweb.com -q | httpx -silent | anew | waybackurls | gf sqli >> sqli ; sqlmap -m sqli --batch --random-agent --level 1
 ```
 
 ###  Jaeles scan to bugbounty targets.
@@ -380,19 +413,105 @@ assetfinder DOMAIN --subs-only | anew | massdns -r lists/resolvers.txt -t A -o S
 cat file.js | grep -aoP "(?<=(\"|\'|\`))\/[a-zA-Z0-9_?&=\/\-\#\.]*(?=(\"|\'|\`))" | sort -u 
 ```
 
+###  Find subdomains and Secrets with jsubfinder
+
+- [Explained command](https://bit.ly/3dvP6xq)
+
+```bash
+cat subdomsains.txt | httpx --silent | jsubfinder -s
+```
+
+###  Search domains to Range-IPS.
+
+- [Explained command](https://bit.ly/3fa0eAO)
+
+```bash
+cat dod1 | awk '{print $1}' | xargs -I@ sh -c 'prips @ | hakrevdns -r 1.1.1.1' | awk '{print $2}' | sed -r 's/.$//g' | httpx -silent -timeout 25 | anew 
+```
+
+###  Search new's domains using dnsgen.
+
+- [Explained command](https://bit.ly/3kNTHNm)
+
+```bash
+xargs -a army1 -I@ sh -c 'echo @' | dnsgen - | httpx -silent -threads 10000 | anew newdomain
+```
+
+###  List ips, domain extract, using amass + wordlist
+
+- [Explained command](https://bit.ly/2JpRsmS)
+
+```bash
+amass enum -src -ip -active -brute -d navy.mil -o domain ; cat domain | cut -d']' -f 2 | awk '{print $1}' | sort -u > hosts-amass.txt ; cat domain | cut -d']' -f2 | awk '{print $2}' | tr ',' '\n' | sort -u > ips-amass.txt ; curl -s "https://crt.sh/?q=%.navy.mil&output=json" | jq '.[].name_value' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u > hosts-crtsh.txt ; sed 's/$/.navy.mil/' dns-Jhaddix.txt_cleaned > hosts-wordlist.txt ; cat hosts-amass.txt hosts-crtsh.txt hosts-wordlist.txt | sort -u > hosts-all.txt
+```
+###  Search domains using amass and search vul to nuclei.
+
+- [Explained command](https://bit.ly/3gsbzNt)
+
+```bash
+amass enum -passive -norecursive -d disa.mil -o domain ; httpx -l domain -silent -threads 10 | nuclei -t PATH -o result -timeout 30 
+```
+
+###  Verify to cert using openssl.
+
+- [Explained command](https://bit.ly/37avq0C)
+
+```bash
+sed -ne 's/^\( *\)Subject:/\1/p;/X509v3 Subject Alternative Name/{
+    N;s/^.*\n//;:a;s/^\( *\)\(.*\), /\1\2\n\1/;ta;p;q; }' < <(
+    openssl x509 -noout -text -in <(
+        openssl s_client -ign_eof 2>/dev/null <<<$'HEAD / HTTP/1.0\r\n\r' \
+            -connect hackerone.com:443 ) )
+```
+
+
+###  Search domains using openssl to cert.
+
+- [Explained command](https://bit.ly/3m9AsOY)
+
+```bash
+xargs -a recursivedomain -P50 -I@ sh -c 'openssl s_client -connect @:443 2>&1 '| sed -E -e 's/[[:blank:]]+/\n/g' | httpx -silent -threads 1000 | anew 
+```
+
+
+
+### Search to Hackers.
+
+- [Censys](https://censys.io)
+- [Spyce](https://spyce.com)
+- [Shodan](https://shodan.io)
+- [Viz Grey](https://viz.greynoise.io)
+- [Zoomeye](https://zoomeye.org)
+- [Onyphe](https://onyphe.io)
+- [Wigle](https://wigle.net)
+- [Intelx](https://intelx.io)
+- [Fofa](https://fofa.so)
+- [Hunter](https://hunter.io)
+- [Zorexeye](https://zorexeye.com)
+- [Pulsedive](https://pulsedive.com)
+- [Netograph](https://netograph.io)
+- [Vigilante](https://vigilante.pw)
+- [Pipl](https://pipl.com)
+- [Abuse](https://abuse.ch)
+- [Cert-sh](https://cert.sh)
+- [Maltiverse](https://maltiverse.com/search)
+- [Insecam](https://insecam.org)
+- [Anubis](https://https://jldc.me/anubis/subdomains/att.com)
+- [Dns Dumpster](https://dnsdumpster.com)
+- [PhoneBook](https://phonebook.cz)
+- [Inquest](https://labs.inquest.net)
+- [Scylla](https://scylla.sh)
+
+
 # Project
 
 [![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)
 [![made-with-bash](https://img.shields.io/badge/Made%20with-Bash-1f425f.svg)](https://www.gnu.org/software/bash/)
 [![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/blue?icon=github)](https://github.com/Naereen/badges/)
-[![The King](https://aleen42.github.io/badges/src/twitter.svg)](https://twitter.com/ofjaaah)
-[![The King](https://aleen42.github.io/badges/src/twitter.svg)](https://twitter.com/zeroc00I)
-[![The King](https://aleen42.github.io/badges/src/twitter.svg)](https://twitter.com/willxenoo)
 [![Telegram](https://patrolavia.github.io/telegram-badge/chat.png)](https://t.me/KingOfTipsBugBounty)
 
 
 
 <a href="https://www.buymeacoffee.com/OFJAAAH" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 20px !important;width: 50px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
-
 
 
