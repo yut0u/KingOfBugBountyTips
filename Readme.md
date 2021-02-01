@@ -2,6 +2,8 @@
 
 Our main goal is to share tips from some well-known bughunters. Using recon methodology, we are able to find subdomains, apis, and tokens that are already exploitable, so we can report them. We wish to influence Onelinetips and explain the commands, for the better understanding of new hunters..
 
+Want to earn 100 dollars using my code on ocean-digital? https://m.do.co/c/703ff752fd6f
+
 ## Join Us
 
 [![Telegram](https://patrolavia.github.io/telegram-badge/chat.png)](https://t.me/joinchat/DN_iQksIuhyPKJL1gw0ttA)
@@ -18,6 +20,7 @@ Our main goal is to share tips from some well-known bughunters. Using recon meth
 - [@NahamSec](https://twitter.com/NahamSec)
 - [@j3ssiejjj](https://twitter.com/j3ssiejjj)
 - [@zseano](https://twitter.com/zseano)
+- [@pry0cc](https://twitter.com/pry0cc)
 
 ## Scripts that need to be installed
 
@@ -40,18 +43,82 @@ To run the project, you will need to install the following programs:
 - [Rush](https://github.com/shenwei356/rush)
 - [Jsubfinder](https://github.com/hiddengearz/jsubfinder)
 - [Shuffledns](https://github.com/projectdiscovery/shuffledns)
+- [haktldextract](https://github.com/hakluke/haktldextract)
+- [Gau](https://github.com/lc/gau)
+- [Axiom](https://github.com/pry0cc/axiom)
+- [Html-tools](https://github.com/tomnomnom/hacks/tree/master/html-tool)
+- [Dalfox](https://github.com/hahwul/dalfox)
 
 ### OneLiners
+
+###  Extract urls to source code comments
+
+- [Explaining command](https://bit.ly/2MKkOxm)
+
+```bash
+cat urls1 | html-tool comments | grep -oE '\b(https?|http)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]' 
+```
+
+###  Axiom recon "complete"
+
+- [Explaining command](https://bit.ly/2NIavul)
+
+```bash
+findomain -t domain -q -u url ; axiom-scan url -m subfinder -o subs --threads 3 ; axiom-scan subs -m httpx -o http ; axiom-scan http -m ffuf --threads 15 -o ffuf-output ; cat ffuf-output | tr "," " " | awk '{print $2}' | fff | grep 200 | sort -u 
+```
+
+###  Domain subdomain extraction 
+
+- [Explaining command](https://bit.ly/3c2t6eG)
+
+```bash
+cat url | haktldextract -s -t 16 | tee subs.txt ; xargs -a subs.txt -I@ sh -c 'assetfinder -subs-only @ | anew | httpx -silent  -threads 100 | anew httpDomain'
+
+```
+
+
+###  Search .js using 
+
+- [Explaining command](https://bit.ly/362LyQF)
+
+```bash
+assetfinder -subs-only DOMAIN -silent | httpx -timeout 3 -threads 300 --follow-redirects -silent | xargs -I% -P10 sh -c 'hakrawler -plain -linkfinder -depth 5 -url %' | awk '{print $3}' | grep -E "\.js(?:onp?)?$" | anew
+```
+
+
+###  This one was huge ... But it collects .js gau + wayback + gospider and makes an analysis of the js. tools you need below.
+
+- [Explaining command](https://bit.ly/3sD0pLv)
+
+```bash
+cat dominios | gau |grep -iE '\.js'|grep -iEv '(\.jsp|\.json)' >> gauJS.txt ; cat dominios | waybackurls | grep -iE '\.js'|grep -iEv '(\.jsp|\.json)' >> waybJS.txt ; gospider -a -S dominios -d 2 | grep -Eo "(http|https)://[^/\"].*\.js+" | sed "s#\] \- #\n#g" >> gospiderJS.txt ; cat gauJS.txt waybJS.txt gospiderJS.txt | sort -u >> saidaJS ; rm -rf *.txt ; cat saidaJS | anti-burl |awk '{print $4}' | sort -u >> AliveJs.txt ; xargs -a AliveJs.txt -n 2 -I@ bash -c "echo -e '\n[URL]: @\n'; python3 linkfinder.py -i @ -o cli" ; cat AliveJs.txt  | python3 collector.py output ; rush -i output/urls.txt 'python3 SecretFinder.py -i {} -o cli | sort -u >> output/resultJSPASS'
+```
 
 
 ###  My recon automation simple. OFJAAAH.sh
 
 - [Explaining command](https://bit.ly/3nWHM22)
 
-
 ```bash
 amass enum -d $1 -o amass1 ; chaos -d $1 -o chaos1 -silent ; assetfinder $1 >> assetfinder1 ; subfinder -d $1 -o subfinder1 ; findomain -t $1 -q -u findomain1 ;python3 /root/PENTESTER/github-search/github-subdomains.py -t YOURTOKEN -d $1 >> github ; cat assetfinder1 subfinder1 chaos1 amass1 findomain1 subfinder1 github >> hosts ; subfinder -dL hosts -o full -timeout 10 -silent ; httpx -l hosts -silent -threads 9000 -timeout 30 | anew domains ; rm -rf amass1 chaos1 assetfinder1 subfinder1 findomain1  github
 ```
+
+###  Download all domains to bounty chaos
+
+- [Explaining command](https://bit.ly/38wPQ4o)
+
+```bash
+wget https://raw.githubusercontent.com/KingOfBugbounty/KingOfBugBountyTips/master/downlink ; xargs -a downlink -I@ sh -c 'wget @ -q'; mkdir bounty ; unzip '*.zip' -d bounty/ ; rm -rf *zip ; cat bounty/*.txt >> allbounty ; sort -u allbounty >> domainsBOUNTY ; rm -rf allbounty bounty/ ; echo '@OFJAAAH'
+```
+
+###  Recon to search SSRF Test
+
+- [Explaining command](https://bit.ly/3shFFJ5)
+
+```bash
+findomain -t DOMAIN -q | httpx -silent -threads 1000 | gau |  grep "=" | qsreplace http://YOUR.burpcollaborator.net
+```
+
 
 ###  ShuffleDNS to domains in file scan nuclei.
 
